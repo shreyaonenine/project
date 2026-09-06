@@ -1,122 +1,113 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { LandingPage } from './pages/LandingPage';
+import { LoginPage } from './pages/Login';
+import { RegisterPage } from './pages/Register';
+import { SchemeBuilder } from './pages/admin/SchemeBuilder';
+import { ApplyPage } from './pages/user/Apply';
+import { ReviewQueue } from './pages/gov/ReviewQueue';
 
-function App() {
-  const [count, setCount] = useState(0)
+function Navigation() {
+  const { role, token, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <header className="border-b border-zinc-200 px-8 py-4 flex justify-between items-center bg-white sticky top-0 z-50">
+      <Link to="/" className="font-bold tracking-tight text-lg text-black">
+        Industrial Portal
+      </Link>
+      <nav className="flex items-center gap-6 text-sm font-medium">
+        <Link to="/" className="hover:text-zinc-600 transition-colors">All Schemes</Link>
 
-      <div className="ticks"></div>
+        {role === 'admin' && (
+          <Link to="/admin" className="hover:text-zinc-600 font-semibold text-black transition-colors">
+            Admin Panel
+          </Link>
+        )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {(role === 'gov_employee' || role === 'admin') && (
+          <Link to="/gov" className="hover:text-zinc-600 font-semibold text-black transition-colors">
+            Gov Review
+          </Link>
+        )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {!token ? (
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="hover:text-zinc-600 transition-colors">Login</Link>
+            <Link to="/register" className="bg-black text-white px-3 py-1.5 rounded text-xs hover:bg-zinc-800 transition-colors">
+              Sign Up
+            </Link>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <span className="text-xs uppercase font-mono px-2 py-1 bg-zinc-100 border border-zinc-200 rounded text-zinc-700">
+              {role}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="border border-zinc-300 text-xs px-3 py-1.5 rounded hover:bg-zinc-100 transition-colors cursor-pointer"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </nav>
+    </header>
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <div className="min-h-screen bg-white text-zinc-900 font-sans">
+          <Navigation />
+          <main>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+
+              {/* Admin Only Route */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <SchemeBuilder />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Gov Review Queue (Admin & Gov Employees only) */}
+              <Route
+                path="/gov"
+                element={
+                  <ProtectedRoute allowedRoles={['gov_employee', 'admin']}>
+                    <ReviewQueue />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* User Application Form (Requires any logged-in user) */}
+              <Route
+                path="/apply/:schemeId"
+                element={
+                  <ProtectedRoute allowedRoles={['user', 'admin', 'gov_employee']}>
+                    <ApplyPage />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </main>
+        </div>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
